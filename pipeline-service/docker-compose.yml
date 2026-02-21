@@ -1,0 +1,25 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: fire-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    command: ["serve"]
+
+  pipeline-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fire-pipeline-service
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: llama3.2:1b
+      MOCK_LLM: "1"
+    command: ["python", "-m", "pipeline_service.main", "--sample"]
+
+volumes:
+  ollama-data:

@@ -1,0 +1,5 @@
+langgraph>=0.2.50
+requests>=2.32.0
+
+[dev]
+pytest>=8.0.0
