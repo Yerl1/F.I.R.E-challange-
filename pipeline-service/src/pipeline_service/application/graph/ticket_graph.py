@@ -3,6 +3,7 @@ from __future__ import annotations
 from langgraph.graph import END, START, StateGraph
 
 from pipeline_service.application.nodes import (
+    extract_ocr_text,
     get_enriched_data,
     get_geo_data,
     get_language,
@@ -22,6 +23,7 @@ def build_ticket_graph():
 
     graph.add_node("start", start.run)
     graph.add_node("ingest_data", ingest_data.run)
+    graph.add_node("extract_ocr_text", extract_ocr_text.run)
     graph.add_node("get_geo_data", get_geo_data.run)
     graph.add_node("get_enriched_data", get_enriched_data.run)
     graph.add_node("get_summary_recommendation", get_summary_recommendation.run)
@@ -33,7 +35,9 @@ def build_ticket_graph():
 
     graph.add_edge(START, "start")
     graph.add_edge("start", "ingest_data")
-    graph.add_edge("ingest_data", "get_geo_data")
+
+    graph.add_edge("ingest_data", "extract_ocr_text")
+    graph.add_edge("extract_ocr_text", "get_geo_data")
     graph.add_edge("get_geo_data", "get_enriched_data")
     graph.add_edge("get_enriched_data", "get_summary_recommendation")
     graph.add_edge("get_enriched_data", "get_type")

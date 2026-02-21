@@ -13,3 +13,7 @@ class Ticket:
     city: str | None = None
     street: str | None = None
     house: str | None = None
+    gender: str | None = None
+    birth_date: str | None = None
+    segment: str | None = None
+    attachments: str | None = None

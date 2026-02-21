@@ -13,7 +13,14 @@ class TicketState(TypedDict, total=False):
     street: str
     house: str
 
+    gender: str
+    birth_date: str
+    segment: str
+    attachments: str
+    extracted_text: str
+
     geo_result: dict[str, object]
+    enriched_description: str
     enriched_text: str
 
     language: str

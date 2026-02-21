@@ -1,0 +1,8 @@
+numpy<2
+langgraph>=0.2.50
+requests>=2.32.0
+fasttext>=0.9.3
+Pillow>=10.0.0
+paddleocr==2.7.3
+paddlepaddle==2.6.2
+pytest>=8.0.0

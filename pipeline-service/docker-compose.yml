@@ -8,6 +8,19 @@ services:
       - ollama-data:/root/.ollama
     command: ["serve"]
 
+  nominatim:
+    image: mediagis/nominatim:4.4
+    container_name: nominatim
+    ports:
+      - "8080:8080"
+    environment:
+      PBF_URL: https://download.geofabrik.de/asia/kazakhstan-latest.osm.pbf
+      REPLICATION_URL: https://download.geofabrik.de/asia/kazakhstan-updates/
+      NOMINATIM_PASSWORD: nominatim
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+    shm_size: 1gb
+
   pipeline-service:
     build:
       context: .
@@ -15,11 +28,16 @@ services:
     container_name: fire-pipeline-service
     depends_on:
       - ollama
+      - nominatim
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_MODEL: llama3.2:1b
       MOCK_LLM: "1"
+      ATTACHMENTS_DIR: /app/attachments
+    volumes:
+      - ./attachments:/app/attachments
     command: ["python", "-m", "pipeline_service.main", "--sample"]
 
 volumes:
   ollama-data:
+  nominatim-data:

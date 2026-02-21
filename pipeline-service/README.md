@@ -48,6 +48,29 @@ python -m pipeline_service.main --sample
 pytest -q
 ```
 
+## fastText language model setup
+
+Language detection uses fastText model `lid.176.ftz`.
+
+```bash
+cd pipeline-service
+source .venv/bin/activate
+make install_deps
+make setup_fasttext
+```
+
+Set model path (already included in root `.env`):
+
+```bash
+FASTTEXT_MODEL_PATH=/home/arsen/F.I.R.E-challange-/pipeline-service/models/lid.176.ftz
+```
+
+If you use shell exports instead of `.env`:
+
+```bash
+export FASTTEXT_MODEL_PATH=/home/arsen/F.I.R.E-challange-/pipeline-service/models/lid.176.ftz
+```
+
 ## Where to change logic
 
 - Graph topology: `src/pipeline_service/application/graph/ticket_graph.py`
