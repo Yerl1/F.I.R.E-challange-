@@ -38,4 +38,6 @@ src/pipeline_service/infrastructure/persistence/repository.py
 src/pipeline_service/interfaces/__init__.py
 src/pipeline_service/interfaces/cli/__init__.py
 src/pipeline_service/interfaces/cli/run_graph.py
+tests/test_get_sentiment.py
+tests/test_get_sentiment_hf_integration.py
 tests/test_graph_smoke.py
