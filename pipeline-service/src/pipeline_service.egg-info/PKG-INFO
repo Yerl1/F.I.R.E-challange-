@@ -2,17 +2,24 @@ Metadata-Version: 2.4
 Name: pipeline-service
 Version: 0.1.0
 Summary: DDD-oriented ticket pipeline service built with LangGraph
-Requires-Python: >=3.11
+Requires-Python: <3.13,>=3.11
 Description-Content-Type: text/markdown
 Requires-Dist: numpy<2
 Requires-Dist: langgraph>=0.2.50
 Requires-Dist: requests>=2.32.0
 Requires-Dist: fasttext>=0.9.3
+Requires-Dist: transformers<4.55.0,>=4.40.0
+Requires-Dist: torch<2.4.0,>=2.2.0
+Requires-Dist: sentencepiece>=0.2.0
 Requires-Dist: Pillow>=10.0.0
 Requires-Dist: paddleocr==2.7.3
 Requires-Dist: paddlepaddle==2.6.2
 Provides-Extra: dev
 Requires-Dist: pytest>=8.0.0; extra == "dev"
+Provides-Extra: local-sentiment
+Requires-Dist: transformers<4.55.0,>=4.40.0; extra == "local-sentiment"
+Requires-Dist: torch<2.4.0,>=2.2.0; extra == "local-sentiment"
+Requires-Dist: sentencepiece>=0.2.0; extra == "local-sentiment"
 
 # Pipeline Service
 

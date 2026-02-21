@@ -20,7 +20,6 @@ class TicketState(TypedDict, total=False):
     extracted_text: str
 
     geo_result: dict[str, object]
-    enriched_description: str
     enriched_text: str
 
     language: str

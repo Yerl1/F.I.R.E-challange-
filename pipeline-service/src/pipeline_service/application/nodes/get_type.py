@@ -14,7 +14,7 @@ TICKET_TYPES = [
 
 
 def run(state: TicketState) -> dict[str, object]:
-    text = (state.get("enriched_description") or state.get("enriched_text") or state.get("raw_text") or "").lower()
+    text = (state.get("enriched_text") or state.get("raw_text") or "").lower()
     if "мошенн" in text:
         ticket_type = "Мошеннические действия"
     elif "не открыва" in text or "ошибка" in text:

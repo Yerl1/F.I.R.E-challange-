@@ -25,6 +25,7 @@ src/pipeline_service/application/nodes/persist.py
 src/pipeline_service/application/nodes/start.py
 src/pipeline_service/application/services/__init__.py
 src/pipeline_service/application/services/csv_ingestion_service.py
+src/pipeline_service/application/services/ocr_cleanup.py
 src/pipeline_service/application/state/__init__.py
 src/pipeline_service/application/state/ticket_state.py
 src/pipeline_service/domain/__init__.py
@@ -48,5 +49,7 @@ src/pipeline_service/interfaces/__init__.py
 src/pipeline_service/interfaces/cli/__init__.py
 src/pipeline_service/interfaces/cli/run_graph.py
 tests/test_csv_ingestion.py
+tests/test_get_sentiment.py
+tests/test_get_sentiment_local_integration.py
 tests/test_graph_smoke.py
 tests/test_ocr_node.py

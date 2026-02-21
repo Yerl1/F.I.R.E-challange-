@@ -7,12 +7,15 @@ name = "pipeline-service"
 version = "0.1.0"
 description = "DDD-oriented ticket pipeline service built with LangGraph"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 dependencies = [
   "numpy<2",
   "langgraph>=0.2.50",
   "requests>=2.32.0",
   "fasttext>=0.9.3",
+  "transformers>=4.40.0,<4.55.0",
+  "torch>=2.2.0,<2.4.0",
+  "sentencepiece>=0.2.0",
   "Pillow>=10.0.0",
   "paddleocr==2.7.3",
   "paddlepaddle==2.6.2",
@@ -22,9 +25,24 @@ dependencies = [
 dev = [
   "pytest>=8.0.0",
 ]
+local-sentiment = [
+  "transformers>=4.40.0,<4.55.0",
+  "torch>=2.2.0,<2.4.0",
+  "sentencepiece>=0.2.0",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+markers = [
+  "integration: tests that hit local model inference path",
+]
+filterwarnings = [
+  "ignore:builtin type SwigPyPacked has no __module__ attribute:DeprecationWarning",
+  "ignore:builtin type SwigPyObject has no __module__ attribute:DeprecationWarning",
+  "ignore:builtin type swigvarlink has no __module__ attribute:DeprecationWarning",
+]
