@@ -9,26 +9,43 @@ description = "DDD-oriented ticket pipeline service built with LangGraph"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-  "numpy<2",
+  "numpy==1.26.4",
   "langgraph>=0.2.50",
   "requests>=2.32.0",
-  "fasttext>=0.9.3",
-  "transformers>=4.40.0,<4.55.0",
-  "torch>=2.2.0,<2.4.0",
-  "sentencepiece>=0.2.0",
   "Pillow>=10.0.0",
-  "paddleocr==2.7.3",
-  "paddlepaddle==2.6.2",
 ]
 
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0.0",
 ]
-local-sentiment = [
-  "transformers>=4.40.0,<4.55.0",
-  "torch>=2.2.0,<2.4.0",
+ml = [
+  "fasttext>=0.9.3; platform_system != 'Windows'",
+  "transformers==4.54.1",
+  "torch==2.3.1",
   "sentencepiece>=0.2.0",
+]
+ocr = [
+  "paddleocr==2.7.3",
+  "paddlepaddle==2.6.2",
+]
+full = [
+  "fasttext>=0.9.3; platform_system != 'Windows'",
+  "transformers==4.54.1",
+  "torch==2.3.1",
+  "sentencepiece>=0.2.0",
+  "paddleocr==2.7.3",
+  "paddlepaddle==2.6.2",
+]
+local-sentiment = [
+  "transformers==4.54.1",
+  "torch==2.3.1",
+  "sentencepiece>=0.2.0",
+]
+torch-stack = [
+  "torch==2.3.1",
+  "torchvision==0.18.1",
+  "torchaudio==2.3.1",
 ]
 
 [tool.setuptools]

@@ -24,6 +24,7 @@ class TicketState(TypedDict, total=False):
 
     language: str
     sentiment: str
+    is_spam: bool
     ticket_type: str
 
     summary: str

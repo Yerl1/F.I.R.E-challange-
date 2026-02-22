@@ -37,6 +37,20 @@ def _env_true(name: str, default: str = "0") -> bool:
                      default).strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _timeout_seconds() -> float:
+    configured = os.getenv("GEOCODER_TIMEOUT_SECONDS", "").strip()
+    if configured:
+        try:
+            value = float(configured)
+            if value > 0:
+                return value
+        except ValueError:
+            pass
+    if _env_true("PERF_MODE", "0"):
+        return 1.0
+    return 1.5
+
+
 def _build_query_variants(
     country: str,
     region: str,
@@ -194,7 +208,7 @@ def run(state: TicketState) -> dict[str, object]:
                                "https://nominatim.openstreetmap.org"),
             user_agent=os.getenv("GEOCODER_USER_AGENT",
                                  "fire-pipeline-service/0.1"),
-            timeout_s=1.5,
+            timeout_s=_timeout_seconds(),
         )
 
         llm_query = _normalize_query_with_llm(
