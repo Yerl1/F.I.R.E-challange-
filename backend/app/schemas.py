@@ -9,6 +9,10 @@ class ProcessOneRequest(BaseModel):
     payload: dict[str, Any]
 
 
+class AssignRequest(BaseModel):
+    payload: dict[str, Any]
+
+
 class ProcessCsvRequest(BaseModel):
     csv_path: str | None = None
 
@@ -25,6 +29,10 @@ class ProcessCsvResponse(BaseModel):
 
 class ProcessOneResponse(BaseModel):
     ticket: dict[str, Any]
+
+
+class AssignResponse(BaseModel):
+    assignment: dict[str, Any]
 
 
 class RecentResponse(BaseModel):

@@ -44,6 +44,7 @@ services:
       - nominatim
     environment:
       BACKEND_DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/fire_backend
+      AUTO_BOOTSTRAP: "1"
       BACKEND_DOCS_DIR: /app/docs
       OLLAMA_BASE_URL: http://ollama:11434
       PIPELINE_OLLAMA_MODEL: llama3.2:1b

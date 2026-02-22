@@ -30,6 +30,11 @@ class TicketState(TypedDict, total=False):
     summary: str
     recommendation: str
     priority: int
+    manager_id: int
+    manager_name: str
+    office_id: int
+    office_name: str
+    office_address: str
 
     persist_id: str
     errors: NotRequired[list[str]]

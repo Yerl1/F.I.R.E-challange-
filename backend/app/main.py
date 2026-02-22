@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .ai_agent import router as ai_agent_router
 from .db import init_db
 from .schemas import (
+    AssignRequest,
+    AssignResponse,
     BootstrapResponse,
     ProcessCsvRequest,
     ProcessCsvResponse,
@@ -35,6 +38,9 @@ app.add_middleware(
 @app.on_event("startup")
 def _startup() -> None:
     init_db()
+    if os.getenv("AUTO_BOOTSTRAP", "1") in {"1", "true", "True"}:
+        stats = service.bootstrap_reference_data()
+        logger.info("Auto bootstrap complete: offices=%s managers=%s", stats.offices, stats.managers)
 
 
 @app.get("/health")
@@ -59,6 +65,16 @@ def process_one(req: ProcessOneRequest) -> ProcessOneResponse:
         return ProcessOneResponse(ticket=result)
     except Exception as exc:
         logger.exception("Single ticket processing failed")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/api/v1/tickets/assign", response_model=AssignResponse)
+def assign_ticket(req: AssignRequest) -> AssignResponse:
+    try:
+        assignment = service.assign_for_state(dict(req.payload))
+        return AssignResponse(assignment=assignment)
+    except Exception as exc:
+        logger.exception("Ticket assignment failed")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 

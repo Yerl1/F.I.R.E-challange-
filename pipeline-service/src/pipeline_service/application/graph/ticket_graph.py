@@ -3,6 +3,7 @@ from __future__ import annotations
 from langgraph.graph import END, START, StateGraph
 
 from pipeline_service.application.nodes import (
+    assign_manager,
     extract_ocr_text,
     get_enriched_data,
     get_geo_data,
@@ -40,6 +41,7 @@ def build_ticket_graph():
     graph.add_node("get_sentiment", get_sentiment.run)
     graph.add_node("get_language", get_language.run)
     graph.add_node("get_priority", get_priority.run)
+    graph.add_node("assign_manager", assign_manager.run)
     graph.add_node("persist", persist.run)
 
     graph.add_edge(START, "start")
@@ -64,7 +66,8 @@ def build_ticket_graph():
 
     graph.add_edge(["get_sentiment", "type_gate"], "get_priority")
 
-    graph.add_edge(["get_priority", "get_language", "get_summary_recommendation"], "persist")
+    graph.add_edge(["get_priority", "get_language", "get_summary_recommendation"], "assign_manager")
+    graph.add_edge("assign_manager", "persist")
 
     graph.add_edge("persist", END)
 

@@ -42,22 +42,9 @@ class TicketProcessingService:
 
     def process_one_ticket(self, payload: dict[str, Any]) -> dict[str, Any]:
         state = self._graph.invoke(payload)
+        assignment_payload = self.assign_for_state(state)
         with get_session() as session:
-            assignment = assign_manager(session, state)
-            state["manager_id"] = assignment.manager_id
-            if assignment.manager_id is not None:
-                manager = session.get(Manager, assignment.manager_id)
-                state["manager_name"] = manager.full_name if manager else None
-            else:
-                state["manager_name"] = None
-            state["office_id"] = assignment.office_id
-            if assignment.office_id is not None:
-                office = session.get(Office, assignment.office_id)
-                state["office_name"] = office.name if office else None
-                state["office_address"] = office.address if office else None
-            else:
-                state["office_name"] = None
-                state["office_address"] = None
+            state.update(assignment_payload)
 
             ticket_row = TicketResult(
                 external_ticket_id=str(state.get("ticket_id", "")),
@@ -70,14 +57,35 @@ class TicketProcessingService:
                 recommendation=str(state.get("recommendation", "")),
                 enriched_text=str(state.get("enriched_text", "")),
                 geo_result=state.get("geo_result", {}) if isinstance(state.get("geo_result"), dict) else {},
-                manager_id=assignment.manager_id,
-                office_id=assignment.office_id,
+                manager_id=state.get("manager_id"),
+                office_id=state.get("office_id"),
                 payload=dict(state),
             )
             session.add(ticket_row)
             session.flush()
             state["db_ticket_id"] = ticket_row.id
         return state
+
+    def assign_for_state(self, state: dict[str, Any]) -> dict[str, Any]:
+        with get_session() as session:
+            assignment = assign_manager(session, state)
+            manager_name = None
+            office_name = None
+            office_address = None
+            if assignment.manager_id is not None:
+                manager = session.get(Manager, assignment.manager_id)
+                manager_name = manager.full_name if manager else None
+            if assignment.office_id is not None:
+                office = session.get(Office, assignment.office_id)
+                office_name = office.name if office else None
+                office_address = office.address if office else None
+            return {
+                "manager_id": assignment.manager_id,
+                "manager_name": manager_name,
+                "office_id": assignment.office_id,
+                "office_name": office_name,
+                "office_address": office_address,
+            }
 
     def process_csv(self, csv_path: str | Path | None = None) -> list[dict[str, Any]]:
         path = Path(csv_path) if csv_path is not None else self._settings.tickets_csv_path

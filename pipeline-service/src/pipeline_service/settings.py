@@ -23,6 +23,9 @@ class Settings:
         "PERSIST_POSTGRES_DSN",
         os.getenv("BACKEND_DATABASE_URL", ""),
     )
+    assign_enabled: bool = os.getenv("ASSIGN_ENABLED", "0") in {"1", "true", "True"}
+    backend_base_url: str = os.getenv("BACKEND_BASE_URL", "http://localhost:8001")
+    backend_assign_timeout_seconds: int = int(os.getenv("BACKEND_ASSIGN_TIMEOUT_SECONDS", "15"))
 
 
 def get_settings() -> Settings:

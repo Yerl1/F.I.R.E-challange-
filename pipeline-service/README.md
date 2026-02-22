@@ -381,3 +381,12 @@ What it does:
 
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\load_env.ps1 -EnvFile "C:\Users\7ruta\Desktop\fire demo\F.I.R.E-challange-\.env"
+
+
+python -m pipeline_service.main --show_timing --input_type=csv --file="C:\Users\7ruta\Desktop\fire demo\F.I.R.E-challange-\eval\tickets.csv"
+
+docker exec -it fire-postgres psql -U postgres -d fire_backend -c "BEGIN; DELETE FROM ticket_results; UPDATE managers SET active_tickets = 0; DELETE FROM routing_state; COMMIT;"
+
+docker exec -it fire-postgres psql -U postgres -d fire_backend -c "SELECT COUNT(*) FROM ticket_results;"
+
+docker-compose up -d --build backend-api
