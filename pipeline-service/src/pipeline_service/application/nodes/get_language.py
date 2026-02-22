@@ -3,7 +3,10 @@ from __future__ import annotations
 import os
 import re
 
-import fasttext
+try:
+    import fasttext
+except Exception:  # pragma: no cover - optional dependency on some platforms
+    fasttext = None
 
 from pipeline_service.application.state.ticket_state import TicketState
 
@@ -12,7 +15,7 @@ _CONFIDENCE_THRESHOLD = 0.7
 _MODEL_PATH = os.getenv("FASTTEXT_MODEL_PATH", "lid.176.ftz")
 
 try:
-    _FASTTEXT_MODEL = fasttext.load_model(_MODEL_PATH)
+    _FASTTEXT_MODEL = fasttext.load_model(_MODEL_PATH) if fasttext is not None else None
 except Exception:
     _FASTTEXT_MODEL = None
 

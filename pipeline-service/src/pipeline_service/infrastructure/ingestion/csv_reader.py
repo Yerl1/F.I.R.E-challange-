@@ -5,6 +5,11 @@ from pathlib import Path
 from typing import Iterable
 
 
+def _normalize_header(header: str) -> str:
+    # Strip UTF-8 BOM from the first header and trim accidental spaces.
+    return header.lstrip("\ufeff").strip()
+
+
 def read_csv_rows(path: str, required_headers: Iterable[str] | None = None) -> list[dict[str, str]]:
     csv_path = Path(path)
     if not csv_path.exists():
@@ -12,10 +17,13 @@ def read_csv_rows(path: str, required_headers: Iterable[str] | None = None) -> l
 
     with csv_path.open("r", encoding="utf-8", newline="") as file:
         reader = csv.DictReader(file)
-        fieldnames = reader.fieldnames or []
+        raw_fieldnames = reader.fieldnames or []
+        normalized_fieldnames = [_normalize_header(field) for field in raw_fieldnames]
+        reader.fieldnames = normalized_fieldnames
 
         if required_headers:
-            missing = [header for header in required_headers if header not in fieldnames]
+            normalized_required = [_normalize_header(header) for header in required_headers]
+            missing = [header for header in normalized_required if header not in normalized_fieldnames]
             if missing:
                 raise ValueError(f"CSV missing required columns: {', '.join(missing)}")
 
@@ -25,7 +33,8 @@ def read_csv_rows(path: str, required_headers: Iterable[str] | None = None) -> l
             for key, value in row.items():
                 if key is None:
                     continue
-                normalized_row[key] = (value or "")
+                normalized_key = _normalize_header(key)
+                normalized_row[normalized_key] = (value or "")
             rows.append(normalized_row)
 
     return rows

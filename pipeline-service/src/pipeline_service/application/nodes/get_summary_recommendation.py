@@ -4,10 +4,16 @@ import re
 
 from pipeline_service.application.state.ticket_state import TicketState
 
-_FALLBACK_SUMMARY_RU = "Обращение получено и подготовлено к обработке."
-_FALLBACK_RECOMMENDATION_RU = "Проверить карточку клиента и уточнить детали обращения."
-_FALLBACK_SUMMARY_EN = "Ticket received and prepared for processing."
-_FALLBACK_RECOMMENDATION_EN = "Review the client profile and clarify missing ticket details."
+_FALLBACK_SUMMARY_RU = "Ассистент сообщает: обращение получено и передано в обработку."
+_FALLBACK_RECOMMENDATION_RU = (
+    "Проверить карточку клиента и уточнить недостающие детали обращения."
+)
+_FALLBACK_SUMMARY_EN = (
+    "Assistant summary: the request was received and routed for processing."
+)
+_FALLBACK_RECOMMENDATION_EN = (
+    "Review the client profile and clarify missing ticket details."
+)
 
 
 def _normalize_text(value: str | None) -> str:
@@ -21,35 +27,78 @@ def _strip_section_headers(value: str) -> str:
 
 def _contains_any(text: str, keywords: tuple[str, ...]) -> bool:
     lowered = text.lower()
-    return any(k in lowered for k in keywords)
+    return any(keyword in lowered for keyword in keywords)
 
 
-def _truncate_summary(text: str, min_len: int = 200, max_len: int = 350) -> str:
-    text = text.strip()
-    if len(text) <= max_len:
-        return text
-
-    cut = text[:max_len]
-    sentence_break = max(cut.rfind(". "), cut.rfind("! "), cut.rfind("? "))
-    if sentence_break >= min_len:
-        return cut[: sentence_break + 1].strip()
-
-    word_break = cut.rfind(" ")
-    if word_break > 0:
-        return (cut[:word_break] + "...").strip()
-    return (cut + "...").strip()
+def _short_issue_text(cleaned_text: str, max_len: int = 180) -> str:
+    if not cleaned_text:
+        return ""
+    if len(cleaned_text) <= max_len:
+        return cleaned_text
+    cut = cleaned_text[:max_len]
+    last_space = cut.rfind(" ")
+    if last_space > 0:
+        cut = cut[:last_space]
+    return cut.strip() + "..."
 
 
-def _build_summary(text: str, english: bool) -> str:
-    if not text:
-        return _FALLBACK_SUMMARY_EN if english else _FALLBACK_SUMMARY_RU
+def _extract_money_hint(text: str) -> str:
+    # Examples: "15-20$", "$15-$20", "15$"
+    patterns = [
+        r"\$?\s*(\d{1,5})\s*[-–]\s*\$?\s*(\d{1,5})\s*\$?",
+        r"\$?\s*(\d{1,5})\s*\$",
+    ]
+    lowered = text.lower()
+    for pattern in patterns:
+        match = re.search(pattern, lowered)
+        if not match:
+            continue
+        groups = [g for g in match.groups() if g]
+        if len(groups) >= 2:
+            return f"(около ${groups[0]}-${groups[1]})"
+        if len(groups) == 1:
+            return f"(около ${groups[0]})"
+    return ""
 
-    base = _truncate_summary(text[:1200])
-    if len(base) < 120:
-        if english:
-            return f"Client reports: {base}".strip()
-        return f"Суть обращения: {base}".strip()
-    return base
+
+def _build_summary_ru(cleaned_text: str) -> str:
+    if not cleaned_text:
+        return _FALLBACK_SUMMARY_RU
+
+    lowered = cleaned_text.lower()
+    # Special-case: fractional stocks request.
+    if ("дробн" in lowered and "акци" in lowered) or (
+        "fractional" in lowered and "stock" in lowered
+    ):
+        app_name = "приложение Freedom Broker" if "freedom broker" in lowered else "приложение"
+        amount_hint = _extract_money_hint(cleaned_text)
+        amount_part = f" при небольших суммах {amount_hint}".replace("  ", " ").strip()
+        if amount_part and not amount_part.startswith("при"):
+            amount_part = "при небольших суммах " + amount_part
+        return (
+            f"Пользователь уточняет, поддерживает ли {app_name} покупку дробных акций"
+            f"{(' ' + amount_part) if amount_part else ''}. "
+            "Если функция доступна, он просит дать пошаговую инструкцию "
+            "по совершению такой покупки в приложении."
+        ).strip()
+
+    issue = _short_issue_text(cleaned_text)
+    if _contains_any(lowered, ("можно ли", "как", "подскажите", "что делать", "инструкция")):
+        return (
+            "Ассистент сообщает: пользователь запрашивает разъяснение по следующему вопросу: "
+            f"{issue}. Просит предоставить пошаговую инструкцию или порядок действий."
+        )
+    return f"Ассистент сообщает: пользователь обращается по вопросу: {issue}."
+
+
+def _build_summary_en(cleaned_text: str) -> str:
+    if not cleaned_text:
+        return _FALLBACK_SUMMARY_EN
+    issue = _short_issue_text(cleaned_text)
+    return (
+        "Assistant summary: the user asks for clarification on the following issue: "
+        f"{issue}. The user requests actionable next steps."
+    )
 
 
 def _build_recommendation(state: TicketState, cleaned_text: str, english: bool) -> str:
@@ -59,9 +108,7 @@ def _build_recommendation(state: TicketState, cleaned_text: str, english: bool) 
     spam_kw = ("реклама", "спам", "рассылка", "spam")
 
     segment = _normalize_text(state.get("segment"))
-    issue_type = _normalize_text(
-        state.get("issue_type") or state.get("type") or state.get("ticket_type")
-    )
+    issue_type = _normalize_text(state.get("issue_type") or state.get("type") or state.get("ticket_type"))
     priority_score = state.get("priority_score") or state.get("priority")
     location = ", ".join([_normalize_text(state.get("city")), _normalize_text(state.get("region"))]).strip(", ")
     ocr_present = bool(_normalize_text(state.get("extracted_text")) or "[OCR]" in (state.get("enriched_text") or ""))
@@ -77,7 +124,7 @@ def _build_recommendation(state: TicketState, cleaned_text: str, english: bool) 
     elif _contains_any(cleaned_text, app_kw):
         rec = (
             "Собрать у клиента модель устройства, версию ОС и приложения, а также шаги воспроизведения ошибки. "
-            "Передать кейс в техническую поддержку с прикреплёнными артефактами."
+            "Передать кейс в техническую поддержку с прикрепленными артефактами."
         )
     elif _contains_any(cleaned_text, data_kw):
         rec = (
@@ -105,7 +152,7 @@ def _build_recommendation(state: TicketState, cleaned_text: str, english: bool) 
     if location:
         extras.append(f"Локация: {location}")
     if ocr_present:
-        extras.append("Учтён текст из вложения")
+        extras.append("Учтен текст из вложения")
 
     if extras:
         rec = f"{rec} {'; '.join(extras)}."
@@ -125,6 +172,6 @@ def run(state: TicketState) -> dict[str, object]:
     source = state.get("enriched_text") or state.get("raw_text") or ""
     cleaned = _strip_section_headers(_normalize_text(source))
 
-    summary = _build_summary(cleaned, english=english)
+    summary = _build_summary_en(cleaned) if english else _build_summary_ru(cleaned)
     recommendation = _build_recommendation(state, cleaned, english=english)
     return {"summary": summary, "recommendation": recommendation}

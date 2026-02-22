@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 SAMPLE_TICKET: dict[str, Any] = {
     "ticket_id": "TCK-1001",
-    "raw_text": "Здравствуйте, приложение не открывается после обновления.",
+    "raw_text": """привет все супер!.""",
     "raw_address": "Алматы, ул. Абая, 10",
     "country": "KZ",
     "region": "Алматинская область",
@@ -34,6 +34,35 @@ def configure_logging() -> None:
     )
 
 
+def configure_runtime() -> None:
+    try:
+        import torch
+
+        num_threads = int(os.getenv("TORCH_NUM_THREADS", "0"))
+        if num_threads > 0:
+            torch.set_num_threads(num_threads)
+        interop_threads = int(os.getenv("TORCH_NUM_INTEROP_THREADS", "0"))
+        if interop_threads > 0:
+            torch.set_num_interop_threads(interop_threads)
+    except Exception:
+        logger.debug("Torch runtime tuning skipped", exc_info=True)
+
+
+def warmup_if_enabled() -> None:
+    if os.getenv("PERF_WARMUP", "0").strip().lower() not in {"1", "true", "yes", "on"}:
+        return
+    try:
+        from pipeline_service.application.nodes import get_language, get_sentiment, get_type
+
+        sample = {"raw_text": "тестовый прогрев модели", "enriched_text": "тестовый прогрев модели"}
+        get_language.run(sample)  # type: ignore[arg-type]
+        get_sentiment.run(sample)  # type: ignore[arg-type]
+        get_type.run(sample)  # type: ignore[arg-type]
+        logger.info("Warmup complete")
+    except Exception:
+        logger.exception("Warmup failed")
+
+
 def load_json_payload(file_path: str | None, use_sample: bool) -> TicketState:
     if use_sample or file_path is None:
         return SAMPLE_TICKET.copy()  # type: ignore[return-value]
@@ -44,6 +73,8 @@ def load_json_payload(file_path: str | None, use_sample: bool) -> TicketState:
 
 def main() -> int:
     configure_logging()
+    configure_runtime()
+    warmup_if_enabled()
 
     parser = argparse.ArgumentParser(description="Run ticket LangGraph pipeline")
     parser.add_argument("--input_type", choices=["json", "csv"], default="json")
