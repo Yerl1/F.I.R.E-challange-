@@ -1,0 +1,83 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: fire-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    command: ["serve"]
+
+  nominatim:
+    image: mediagis/nominatim:4.4
+    container_name: nominatim
+    ports:
+      - "8080:8080"
+    environment:
+      PBF_URL: https://download.geofabrik.de/asia/kazakhstan-latest.osm.pbf
+      REPLICATION_URL: https://download.geofabrik.de/asia/kazakhstan-updates/
+      NOMINATIM_PASSWORD: nominatim
+    volumes:
+      - nominatim-data:/var/lib/postgresql/14/main
+    shm_size: 1gb
+
+  postgres:
+    image: postgres:16
+    container_name: fire-postgres
+    environment:
+      POSTGRES_DB: fire_backend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - backend-pg-data:/var/lib/postgresql/data
+
+  backend-api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: fire-backend-api
+    depends_on:
+      - postgres
+      - ollama
+      - nominatim
+    environment:
+      BACKEND_DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/fire_backend
+      BACKEND_DOCS_DIR: /app/docs
+      OLLAMA_BASE_URL: http://ollama:11434
+      PIPELINE_OLLAMA_MODEL: llama3.2:1b
+      AI_AGENT_OLLAMA_MODEL: qwen2.5:7b-instruct-q4_K_M
+      MAX_ROWS: 500
+      DEFAULT_DAYS_RANGE: 30
+      SQL_TIMEOUT_SECONDS: 5
+      OLLAMA_TIMEOUT_SECONDS: 30
+      GEOCODER_BASE_URL: http://nominatim:8080
+      MOCK_LLM: "0"
+    ports:
+      - "8001:8001"
+
+  pipeline-service:
+    build:
+      context: ./pipeline-service
+      dockerfile: Dockerfile
+    container_name: fire-pipeline-service
+    depends_on:
+      - ollama
+      - nominatim
+      - postgres
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      PIPELINE_OLLAMA_MODEL: llama3.2:1b
+      MOCK_LLM: "0"
+      ATTACHMENTS_DIR: /app/attachments
+      PERSIST_MODE: postgres
+      PERSIST_POSTGRES_DSN: postgresql://postgres:postgres@postgres:5432/fire_backend
+    volumes:
+      - ./pipeline-service/attachments:/app/attachments
+    command: ["python", "-m", "pipeline_service.main", "--sample"]
+
+volumes:
+  ollama-data:
+  nominatim-data:
+  backend-pg-data:
