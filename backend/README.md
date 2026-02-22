@@ -25,7 +25,7 @@ pip install -r backend/requirements.txt
 2. Configure DB URL:
 
 ```bash
-set BACKEND_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/fire_backend
+export BACKEND_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/fire_backend
 ```
 
 PowerShell:
@@ -87,7 +87,7 @@ Flow:
 ### Required env vars
 
 - `OLLAMA_BASE_URL` (default `http://ollama:11434`)
-- `OLLAMA_MODEL` (recommended `qwen2.5:7b-instruct-q4_K_M`)
+- `AI_AGENT_OLLAMA_MODEL` (recommended `qwen2.5:7b-instruct-q4_K_M`)
 - `DEFAULT_DAYS_RANGE` (default `30`)
 - `MAX_ROWS` (default `500`)
 - `SQL_TIMEOUT_SECONDS` (default `5`)

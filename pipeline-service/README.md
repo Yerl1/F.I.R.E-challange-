@@ -65,7 +65,7 @@ Current required variables include:
 
 - `MOCK_LLM`
 - `OLLAMA_BASE_URL`
-- `OLLAMA_MODEL`
+- `PIPELINE_OLLAMA_MODEL` (falls back to `OLLAMA_MODEL` if not set)
 - `ENRICH_WITH_LLM`
 - `GEOCODER_ENABLED`
 - `GEOCODER_BASE_URL`
@@ -223,9 +223,9 @@ ollama pull qwen2.5:7b-instruct-q4_K_M
 Set one in `.env`:
 
 ```bash
-OLLAMA_MODEL=llama3.2:1b
+PIPELINE_OLLAMA_MODEL=llama3.2:1b
 # or
-OLLAMA_MODEL=qwen2.5:7b-instruct-q4_K_M
+PIPELINE_OLLAMA_MODEL=qwen2.5:7b-instruct-q4_K_M
 ```
 
 If Ollama runs in Docker (`ollama` service in compose), pull model inside container:
